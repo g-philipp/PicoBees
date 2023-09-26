@@ -1,39 +1,24 @@
-from machine import Pin
-from src.hx711 import *
+import machine
+import src.BME280.bme280_float as bme280
+from src.hx711endail.src.hx711 import *
 
-print("Start")
+i2c = machine.I2C(0, sda=machine.Pin(8), scl=machine.Pin(9))
+bme = bme280.BME280(i2c=i2c)
 
-# 1. initalise the hx711 with pin 14 as clock pin, pin
-# 15 as data pin
-hx = hx711(Pin(14), Pin(15))
-
-# 2. power up
+# driver = HX711(d_out=5, pd_sck=4)
+hx = hx711(Pin(4), Pin(5))
 hx.set_power(hx711.power.pwr_up)
 
-# 3. [OPTIONAL] set gain and save it to the hx711
-# chip by powering down then back up
-# hx.set_gain(hx711.gain.gain_128)
-# hx.set_power(hx711.power.pwr_down)
-# hx711.wait_power_down()
-# hx.set_power(hx711.power.pwr_up)
+while True:
+    # 4. wait for readings to settle
+    hx711.wait_settle(hx711.rate.rate_10)
 
-# 4. wait for readings to settle
-hx711.wait_settle(hx711.rate.rate_10)
+    # 5. read values
 
-# 5. read values
-
-# wait (block) until a value is read
-val = hx.get_value()
-
-# or use a timeout
-if val := hx.get_value_timeout(250000):
-    # value was obtained within the timeout period
-    # in this case, within 250 milliseconds
+    # wait (block) until a value is read
+    val = hx.get_value()
     print(val)
 
-# or see if there's a value, but don't block if not
-if val := hx.get_value_noblock():
-    print(val)
-
-# 6. stop communication with HX711
-hx.close()
+print(bme.values[0])
+print(bme.values[1])
+print(bme.values[2])
