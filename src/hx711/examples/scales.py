@@ -1,4 +1,4 @@
-from hx711 import HX711
+from hx711endail.hx711 import HX711
 from utime import sleep_us
 
 
