@@ -1,4 +1,4 @@
-from machine import Pin, I2C, SPI
+from machine import Pin, I2C, SPI, RTC
 import src.sd.sdcard
 import uos
 import src.BME280.bme280_float as bme280
@@ -6,51 +6,56 @@ import src.PicoUPSA.picoUPSa as picoUps
 from src.hx711endail.hx711 import *
 
 # BME280 1
-bmeI2c = I2C(0, sda=Pin(16), scl=Pin(17))
-bme1 = bme280.BME280(i2c=bmeI2c)
+# bmeI2c = I2C(1, sda=Pin(26), scl=Pin(27))
+# bmeInt = bme280.BME280(i2c=bmeI2c)
 # BME280 2
 # bmeI2c2 = I2C(1, sda=Pin(6), scl=Pin(7))
-# bme2 = bme280.BME280(i2c=bmeI2c2)
+# bmeExt = bme280.BME280(i2c=bmeI2c2)
 
 # UPS
 # ups = picoUps.INA219(addr=0x43)
 
+# RealTimeClock
+rtc = RTC()
+# rtc.datetime((2023, 10, 14, 6, 15, 56, 0, 0))
+print(rtc.datetime())
 
 # SD
 # Assign chip select (CS) pin (and start it high)
-sdcs = Pin(9, Pin.OUT)
+# sdcs = Pin(9, Pin.OUT)
 
 # Intialize SPI peripheral (start with 1 MHz)
-sdSpi = SPI(1,
-                  baudrate=1000000,
-                  polarity=0,
-                  phase=0,
-                  bits=8,
-                  firstbit=SPI.MSB,
-                  sck=Pin(10),
-                  mosi=Pin(11),
-                  miso=Pin(12))
+# sdSpi = SPI(1,
+#             baudrate=1000000,
+#             polarity=0,
+#             phase=0,
+#             bits=8,
+#             firstbit=SPI.MSB,
+#             sck=Pin(10),
+#             mosi=Pin(11),
+#             miso=Pin(12))
 
 # Initialize SD card
-sd = src.sd.sdcard.SDCard(sdSpi, sdcs)
+# sd = src.sd.sdcard.SDCard(sdSpi, sdcs)
 
-try:
-    # Mount filesystem
-    vfs = uos.VfsFat(sd)
-    uos.mount(vfs, "/sd", readonly=False)
+# try:
+#     # Mount filesystem
+#     vfs = uos.VfsFat(sd)
+#     uos.mount(vfs, "/sd", readonly=False)
 
-    # Check if the mount was successful
-    if "/sd" in uos.listdir():
-        with open("/sd/test01.txt", "a") as file:
-            file.write("Hello, SD World!\r\n")
-            file.write("This is a test\r\n")
-        print("Write operation successful.")
-    else:
-        print("/sd not found, mount may have failed.")
+#     # Check if the mount was successful
+#     if "/sd" in uos.listdir():
+#         with open("/sd/test01.txt", "a") as file:
+#             file.write("Hello, SD World!\r\n")
+#             file.write("This is a test\r\n")
+#             file.close()
+#             uos.umount("/sd")
+#         print("Write operation successful.")
+#     else:
+#         print("/sd not found, mount may have failed.")
 
-except OSError as e:
-    print("Error:", e)
-
+# except OSError as e:
+#     print("Error:", e)
 
 
 with hx711(Pin(4), Pin(5)) as hx:
@@ -60,13 +65,13 @@ with hx711(Pin(4), Pin(5)) as hx:
     print(hx.get_value())
 
 
-## BME280 ##
-print(bme1.values[0])
-print(bme1.values[1])
-print(bme1.values[2])
-# print(bme2.values[0])
-# print(bme2.values[1])
-# print(bme2.values[2])
+# ## BME280 ##
+# print(bmeInt.values[0])
+# print(bmeInt.values[1])
+# print(bmeInt.values[2])
+# print(bmeExt.values[0])
+# print(bmeExt.values[1])
+# print(bmeExt.values[2])
 
 ## UPS ##
 # bus_voltage = ups.getBusVoltage_V()             # voltage on V- (load side)
