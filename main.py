@@ -1,10 +1,12 @@
-from machine import Pin, I2C
+from machine import Pin, I2C, SPI
+import src.sd.sdcard
+import uos
 import src.BME280.bme280_float as bme280
 import src.PicoUPSA.picoUPSa as picoUps
 from src.hx711endail.hx711 import *
 
 # BME280 1
-bmeI2c = I2C(0, sda=Pin(8), scl=Pin(9))
+bmeI2c = I2C(0, sda=Pin(16), scl=Pin(17))
 bme1 = bme280.BME280(i2c=bmeI2c)
 # BME280 2
 # bmeI2c2 = I2C(1, sda=Pin(6), scl=Pin(7))
@@ -12,6 +14,43 @@ bme1 = bme280.BME280(i2c=bmeI2c)
 
 # UPS
 # ups = picoUps.INA219(addr=0x43)
+
+
+# SD
+# Assign chip select (CS) pin (and start it high)
+sdcs = Pin(9, Pin.OUT)
+
+# Intialize SPI peripheral (start with 1 MHz)
+sdSpi = SPI(1,
+                  baudrate=1000000,
+                  polarity=0,
+                  phase=0,
+                  bits=8,
+                  firstbit=SPI.MSB,
+                  sck=Pin(10),
+                  mosi=Pin(11),
+                  miso=Pin(12))
+
+# Initialize SD card
+sd = src.sd.sdcard.SDCard(sdSpi, sdcs)
+
+try:
+    # Mount filesystem
+    vfs = uos.VfsFat(sd)
+    uos.mount(vfs, "/sd", readonly=False)
+
+    # Check if the mount was successful
+    if "/sd" in uos.listdir():
+        with open("/sd/test01.txt", "a") as file:
+            file.write("Hello, SD World!\r\n")
+            file.write("This is a test\r\n")
+        print("Write operation successful.")
+    else:
+        print("/sd not found, mount may have failed.")
+
+except OSError as e:
+    print("Error:", e)
+
 
 
 with hx711(Pin(4), Pin(5)) as hx:
