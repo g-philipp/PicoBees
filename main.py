@@ -1,4 +1,4 @@
-from machine import Pin, I2C, SPI, RTC
+from machine import Pin, I2C, SPI, RTC, deepsleep, lightsleep
 import src.sd.sdcard
 import uos
 import src.BME280.bme280_float as bme280
@@ -7,8 +7,18 @@ from src.hx711endail.hx711 import *
 
 
 ################################
+            #Vars              
+################################
+
+# 5000 ms = 5 Sekunden
+sleepTime = 60000
+
+
+
+################################
             #Init              
 ################################
+
 # BME280 1
 bmeI2c = I2C(1, sda=Pin(26), scl=Pin(27))
 bmeInt = bme280.BME280(i2c=bmeI2c)
@@ -37,13 +47,20 @@ sd = src.sd.sdcard.SDCard(sdSpi, sdcs)
 # RealTimeClock
 rtc = RTC()
 
+
+
 ################################
           #Functions              
 ################################
 
+def goToSleep():
+    # deepsleep(sleepTime)
+    lightsleep(sleepTime)
+
 def getTime():
     # RealTimeClock
     print(rtc.datetime())
+    return rtc.datetime()
 
 def setTime():
     rtc.datetime((2023, 10, 14, 6, 15, 56, 0, 0))
@@ -103,3 +120,21 @@ def getUPS():
     print("Current:  {:6.3f} A".format(current/1000))
     print("Percent:  {:6.1f} %".format(P))
 
+
+
+################################
+            #main              
+################################
+
+try:
+    mountSD()
+    time = getTime()
+    weight = getWeight()
+    weather = getWeather()
+    power = getUPS()
+
+    text = time+";"+weight+";"+weather+";"+power
+    writeSD(text=text)
+    goToSleep()
+except Exception as e:
+    print(e)
