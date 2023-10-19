@@ -1,6 +1,7 @@
 from machine import Pin, I2C, SoftI2C, SPI, RTC, deepsleep, lightsleep
 import src.sd.sdcard
 import uos
+import os
 import src.ds1307.ds1307 as ds1307
 import src.BME280.bme280_float as bme280
 import src.PicoUPSA.picoUPSa as picoUps
@@ -82,8 +83,8 @@ def mountSD():
         # Check if the mount was successful
         if "/sd" in uos.listdir():
             print("Mount operation successful.")
-        else:
-            print("/sd not found, mount may have failed.")
+        # else:
+        #     print("/sd not found, mount may have failed.")
     except OSError as e:
         print("Error:", e)
 
@@ -91,13 +92,13 @@ def unmountSD():
     uos.umount("/sd")
 
 def writeSD(text):
-    if "/sd" in uos.listdir():
-        with open("/sd/test01.txt", "a") as file:
-            file.write(text+"\r\n")
-            file.close()
-        print("Write operation successful.")
-    else:
-        print("/sd not found, mount may have failed.")
+    # if "/sd" in uos.listdir():
+    with open("/sd/sensors.txt", "a") as file:
+        file.write(text+"\r\n")
+        file.close()
+    print("Write operation successful.")
+    # else:
+    #     print("/sd not found, mount may have failed.")
 
 def getWeight():
     with hx711(Pin(5), Pin(4)) as hx:
@@ -155,7 +156,8 @@ try:
     text = str(timestamp) + ";" + str(weight) + ";" + str(weatherInt) + ";" + weatherExt+ ";" + parsedPower
 
     print(text)
-    # writeSD(text=text)
+    writeSD(text=text)
+    unmountSD()
     # goToSleep()
 except Exception as e:
     print(e)
