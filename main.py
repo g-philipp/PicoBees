@@ -1,4 +1,5 @@
 from machine import Pin, I2C, SoftI2C, SPI, RTC, deepsleep, lightsleep
+import time
 import src.sd.sdcard
 import uos
 import os
@@ -13,13 +14,13 @@ from src.hx711endail.hx711 import *
 ################################
 
 # 5000 ms = 5 Sekunden
-sleepTime = 60000
+sleepTime = 10000
 
 
 ################################
             #Init              
 ################################
-
+led = Pin("LED", Pin.OUT)
 # BME280 1
 bmeI2c = I2C(1, sda=Pin(26), scl=Pin(27))
 bmeInt = bme280.BME280(i2c=bmeI2c)
@@ -58,9 +59,10 @@ sd = src.sd.sdcard.SDCard(sdSpi, sdcs)
           #Functions              
 ################################
 
-# def goToSleep():
+def goToSleep():
+    print("going to sleep")
 #     # deepsleep(sleepTime)
-#     lightsleep(sleepTime)
+    lightsleep(sleepTime)
 
 def getTime():
 #     # internal RealTimeClock
@@ -68,11 +70,14 @@ def getTime():
 #     return rtc.datetime()
       return ds1307rtc.datetime
 
+def printTime():
+    print(getTime())
+
 def setTime():
     # internal RTC
     # rtc.datetime((2023, 10, 14, 6, 15, 56, 0, 0))
     # set time (year, month, day, hours. minutes, seconds, weekday: integer: 0-6 )
-    ds1307rtc.datetime = (2023, 10, 19, 19, 24, 0, 3)
+    ds1307rtc.datetime = (2023, 10, 19, 21, 18, 0, 3)
 
 def mountSD():
     try:
@@ -136,28 +141,38 @@ def getUPS():
             #main              
 ################################
 
-try:
-    mountSD()
-    time = getTime()
-    weight = getWeight()
-    bmeIntDeg = bmeInt.values[0]
-    bmeIntPress = bmeInt.values[1]
-    bmeIntHumid = bmeInt.values[2]
-    bmeExtDeg = bmeExt.values[0]
-    bmeExtPress = bmeExt.values[1]
-    bmeExtHumid = bmeExt.values[2]
-    power = getUPS()
+while True:
+    print("started")
+    led.on()
+    # setTime()
+    printTime()
+    try:
+        mountSD()
+        time = getTime()
+        weight = getWeight()
+        bmeIntDeg = bmeInt.values[0]
+        bmeIntPress = bmeInt.values[1]
+        bmeIntHumid = bmeInt.values[2]
+        bmeExtDeg = bmeExt.values[0]
+        bmeExtPress = bmeExt.values[1]
+        bmeExtHumid = bmeExt.values[2]
+        power = getUPS()
 
-    timestamp = str(time[0])+"-"+str(time[1])+"-"+str(time[2])+"_"+str(time[3])+"-"+str(time[4])+"-"+str(time[5])
-    weatherInt = str(bmeIntDeg)+ ";" + str(bmeIntPress)+ ";" + str(bmeIntHumid)
-    weatherExt = str(bmeExtDeg)+ ";" + str(bmeExtPress)+ ";" + str(bmeExtHumid)
-    parsedPower = str(power[0])+ "V;" + str(power[1])+ "mA;" + str(power[2])+"%"
+        timestamp = str(time[0])+"-"+str(time[1])+"-"+str(time[2])+"_"+str(time[3])+"-"+str(time[4])+"-"+str(time[5])
+        weatherInt = str(bmeIntDeg)+ ";" + str(bmeIntPress)+ ";" + str(bmeIntHumid)
+        weatherExt = str(bmeExtDeg)+ ";" + str(bmeExtPress)+ ";" + str(bmeExtHumid)
+        parsedPower = str(power[0])+ "V;" + str(power[1])+ "mA;" + str(power[2])+"%"
 
-    text = str(timestamp) + ";" + str(weight) + ";" + str(weatherInt) + ";" + weatherExt+ ";" + parsedPower
+        text = str(timestamp) + ";" + str(weight) + ";" + str(weatherInt) + ";" + weatherExt+ ";" + parsedPower
 
-    print(text)
-    writeSD(text=text)
-    unmountSD()
-    # goToSleep()
-except Exception as e:
-    print(e)
+        print(text)
+        print("writing to sd")
+        writeSD(text=text)
+        print("done")
+        # unmountSD()
+        led.off()
+        goToSleep()
+    except Exception as e:
+        led.off()
+        goToSleep()
+        # print(e)
