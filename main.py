@@ -6,7 +6,7 @@ import os
 import src.ds1307.ds1307 as ds1307
 import src.BME280.bme280_float as bme280
 import src.PicoUPSA.picoUPSa as picoUps
-from src.hx711endail.hx711 import *
+from src.hx711.hx711_gpio import *
 
 
 ################################
@@ -21,6 +21,7 @@ sleepTime = 10000
             #Init              
 ################################
 led = Pin("LED", Pin.OUT)
+hx = HX711(Pin(5), Pin(4))
 # BME280 1
 bmeI2c = I2C(1, sda=Pin(26), scl=Pin(27))
 bmeInt = bme280.BME280(i2c=bmeI2c)
@@ -106,12 +107,9 @@ def writeSD(text):
     #     print("/sd not found, mount may have failed.")
 
 def getWeight():
-    with hx711(Pin(5), Pin(4)) as hx:
-        hx.set_power(hx711.power.pwr_up)
-        hx.set_gain(hx711.gain.gain_128)
-        hx711.wait_settle(hx711.rate.rate_10)
-        print(hx.get_value())
-        return hx.get_value()
+        hx.set_scale(48.36)
+        hx.tare()
+        return hx.get_units()
 
 # def getWeather():
 #     ## BME280 ##
