@@ -1,8 +1,0 @@
-{
-    "urls": [
-      ["hx711-pico-mpy/hx711.py", "github:org/endail/hx711-pico-mpy/src/hx711.py"]
-    ],
-    "deps": [
-    ],
-    "version": "1.0"
-}

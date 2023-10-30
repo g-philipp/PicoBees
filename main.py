@@ -6,22 +6,57 @@ import os
 import src.ds1307.ds1307 as ds1307
 import src.BME280.bme280_float as bme280
 import src.PicoUPSA.picoUPSa as picoUps
-from src.hx711.hx711_gpio import *
+from src.mphx711.hx711 import HX711
+from utime import sleep_us
 
 
 ################################
             #Vars              
 ################################
 
-# 5000 ms = 5 Sekunden
-sleepTime = 10000
+# 10000 ms = 10 Sekunden
+# 60000 ms = 1 Minute
+sleepTime = 60000
 
+scalesOffset = 111339
+measurements = 10  # Anzahl der Messungen
+calFactor = 0.0000421
+
+class Scales(HX711):
+    def __init__(self, d_out, pd_sck):
+        super(Scales, self).__init__(d_out, pd_sck)
+        self.offset = 0
+
+    def reset(self):
+        self.power_off()
+        self.power_on()
+
+    def tare(self):
+        self.offset = self.read()
+
+    def raw_value(self):
+        return self.read() - self.offset
+
+    def stable_value(self, reads=10, delay_us=500):
+        values = []
+        for _ in range(reads):
+            values.append(self.raw_value())
+            sleep_us(delay_us)
+        return self._stabilizer(values)
+
+    @staticmethod
+    def _stabilizer(values, deviation=10):
+        weights = []
+        for prev in values:
+            weights.append(sum([1 for current in values if abs(prev - current) / (prev / 100) <= deviation]))
+        return sorted(zip(values, weights), key=lambda x: x[1]).pop()[0]
 
 ################################
             #Init              
 ################################
 led = Pin("LED", Pin.OUT)
-hx = HX711(Pin(5), Pin(4))
+scales = Scales(d_out=4, pd_sck=5)
+scales.offset = scalesOffset
 # BME280 1
 bmeI2c = I2C(1, sda=Pin(26), scl=Pin(27))
 bmeInt = bme280.BME280(i2c=bmeI2c)
@@ -107,9 +142,16 @@ def writeSD(text):
     #     print("/sd not found, mount may have failed.")
 
 def getWeight():
-        hx.set_scale(48.36)
-        hx.tare()
-        return hx.get_units()
+    scales.power_on()
+    total_weight = 0.0
+
+    for _ in range(measurements):
+        total_weight += scales.stable_value()
+
+    average_weight = total_weight / measurements
+    scales.power_off()
+        
+    return average_weight * calFactor
 
 # def getWeather():
 #     ## BME280 ##
@@ -143,7 +185,7 @@ while True:
     print("started")
     led.on()
     # setTime()
-    printTime()
+    # printTime()
     try:
         mountSD()
         time = getTime()
