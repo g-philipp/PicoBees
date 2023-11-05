@@ -1,3 +1,4 @@
+# Import der genutzen Bibliotheken
 from machine import Pin, I2C, SoftI2C, SPI, RTC, deepsleep, lightsleep
 import time
 import src.sd.sdcard
@@ -11,7 +12,7 @@ from utime import sleep_us
 
 
 ################################
-            #Vars              
+        #Variablen              
 ################################
 
 # 10000 ms = 10 Sekunden
@@ -22,6 +23,7 @@ scalesOffset = 111339
 measurements = 10  # Anzahl der Messungen
 calFactor = 0.0000421
 
+# Klasse um die HX711 Bibliothek als Waage zu benutzen
 class Scales(HX711):
     def __init__(self, d_out, pd_sck):
         super(Scales, self).__init__(d_out, pd_sck)
@@ -52,23 +54,30 @@ class Scales(HX711):
         return sorted(zip(values, weights), key=lambda x: x[1]).pop()[0]
 
 ################################
-            #Init              
+        #Initialisieren              
 ################################
 led = Pin("LED", Pin.OUT)
+
+# Waage
 scales = Scales(d_out=4, pd_sck=5)
 scales.offset = scalesOffset
-# BME280 1
+
+# Temperatur-Sensoren
+# BME280 Intern
 bmeI2c = I2C(1, sda=Pin(26), scl=Pin(27))
 bmeInt = bme280.BME280(i2c=bmeI2c)
-# BME280 2
+# BME280 Extern
 bmeI2c2 = I2C(1, sda=Pin(6), scl=Pin(7))
 bmeExt = bme280.BME280(i2c=bmeI2c2)
-# RTC
+
+# RealTimeClock
 # uses SoftI2C class and pins for Raspberry Pi pico 
 i2c0 = SoftI2C(scl=Pin(27), sda=Pin(26), freq=100000)
 ds1307rtc = ds1307.DS1307(i2c0, 0x68)
-# UPS
+
+# UPS Board
 ups = picoUps.INA219(addr=0x43)
+
 # SD
 # Assign chip select (CS) pin (and start it high)
 sdcs = Pin(9, Pin.OUT)
@@ -86,13 +95,13 @@ sdSpi = SPI(1,
 # Initialize SD card
 sd = src.sd.sdcard.SDCard(sdSpi, sdcs)
 
-# internal RealTimeClock
+# internal RealTimeClock (not used)
 # rtc = RTC()
 
 
 
 ################################
-          #Functions              
+         #Funktionen              
 ################################
 
 def goToSleep():
@@ -112,6 +121,7 @@ def printTime():
 def setTime():
     # internal RTC
     # rtc.datetime((2023, 10, 14, 6, 15, 56, 0, 0))
+    
     # set time (year, month, day, hours. minutes, seconds, weekday: integer: 0-6 )
     ds1307rtc.datetime = (2023, 10, 19, 21, 18, 0, 3)
 
