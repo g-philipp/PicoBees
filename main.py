@@ -16,8 +16,9 @@ from utime import sleep_us
 ################################
 
 # 10000 ms = 10 Sekunden
-# 60000 ms = 1 Minute
-sleepTime = 60000
+# 60000 ms = 1 Minuten
+# 300000ms = 5 Minuten
+sleepTime = 300000
 
 scalesOffset = 111339
 measurements = 10  # Anzahl der Messungen
